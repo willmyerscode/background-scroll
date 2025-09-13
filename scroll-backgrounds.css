@@ -1,0 +1,74 @@
+/* Active overlay that renders section backgrounds behind the page content */
+#wm-scroll-section-container.is-active {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  width: 100vw;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1; /* Sit behind page content */
+}
+
+/* Hidden absolute state while mounted inside last section before init */
+#wm-scroll-section-container.is-staging {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: -100;
+  opacity: 0;
+  visibility: hidden;
+}
+#wm-scroll-section-container .wm-scroll-sticky{
+  position: sticky;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+#page:has(#wm-scroll-section-container){
+  contain: layout;
+}
+
+/* Wrapper that occupies scroll-space and overlaps neighbors by a fixed amount */
+#wm-scroll-section-container .wm-scroll-wrapper{
+  position: absolute; /* top set via JS to create overlaps */
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+#wm-scroll-section-container .wm-scroll-wrapper.is-active{
+  opacity: 1;
+}
+
+/* Ensure later siblings (after the active) remain fully opaque */
+#wm-scroll-section-container .wm-scroll-wrapper.is-active ~ .wm-scroll-wrapper{
+  opacity: 1;
+}
+
+
+#wm-scroll-section-container .page-section{
+  height: 100vh;
+  min-height: 0;
+}
+
+
+body:not(.sqs-edit-mode-active) #sections > .page-section {
+  background-color: transparent !important;
+}
+body:not(.sqs-edit-mode-active) #sections > .page-section > .section-border{
+  opacity:0;
+  visibility: hidden;
+}
+
+
+body.sqs-edit-mode-active #wm-scroll-section-container{
+  display: none;
+}
