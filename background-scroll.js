@@ -7,6 +7,42 @@
 
   const page = document.querySelector("#page") || document.body;
 
+  // Settings (defaults → global → data attributes)
+  const defaults = {
+    directionalOffsetRatio: 0, // % of viewport height; applied ± based on scroll direction
+  };
+
+  const globalSettings = window.wmScrollBackgroundsSettings || {};
+  const ds = pluginEl.dataset || {};
+  const localSettings = {};
+
+  const parseRatioPercent = (value) => {
+    if (value == null) return undefined;
+    const str = String(value).trim();
+    if (str === "") return undefined;
+    if (str.endsWith("%")) {
+      const n = Number(str.slice(0, -1));
+      if (isFinite(n)) return n / 100;
+      return undefined;
+    }
+    const n = Number(str);
+    if (!isFinite(n)) return undefined;
+    // If given as whole percent (e.g., 10), convert to ratio; if 0..1 keep as-is
+    return Math.abs(n) > 1 ? n / 100 : n;
+  };
+
+  if (ds.directionalOffset != null && ds.directionalOffset !== "") {
+    localSettings.directionalOffsetRatio = parseRatioPercent(ds.directionalOffset);
+  }
+
+  const config = Object.assign({}, defaults, globalSettings, localSettings);
+  const normalizeOffsetRatio = (v) => {
+    const base = typeof v === "number" && isFinite(v) ? v : defaults.directionalOffsetRatio;
+    // Clamp to avoid extreme triggers
+    return Math.max(0, Math.min(0.45, base));
+  };
+  const configDirectionalOffsetRatio = normalizeOffsetRatio(config.directionalOffsetRatio);
+
   // Build overlay container that holds background-only clones inside wrappers
   const scrollContainer = document.createElement("div");
   scrollContainer.id = "wm-scroll-section-container";
@@ -86,12 +122,9 @@
   })();
 
   // -------------------------------------------------------------
-  // Scroll-driven crossfade: show the cloned section that matches
-  // the visible page section by adjusting wrapper opacity.
+  // Midpoint-triggered transition: switch active wrapper when the
+  // next section's top crosses the viewport midpoint.
   // -------------------------------------------------------------
-  // Fade configuration (in pixels)
-  const fadeOffsetPx = 0;    // scroll distance after section start to begin fading
-  const fadeLengthPx = 100;   // scroll distance over which the fade completes
 
   const sectionTops = new Array(sections.length).fill(0);
 
@@ -103,57 +136,63 @@
   };
 
   let ticking = false;
+  let currentActiveIndex = -1;
+  let lastScrollY = window.scrollY;
+  let scrollDirection = "down"; // or "up"
+  const directionalOffsetRatio = configDirectionalOffsetRatio; // 0..0.45
+  let scrollDebounceTimer = null;
 
-  const updateActiveOpacity = () => {
-    const y = window.scrollY;
-    // Find the current index i such that sectionTops[i] <= y < sectionTops[i+1]
+  const updateActiveByMidpoint = () => {
+    const yTop = window.scrollY;
+    // Determine scroll direction with a tiny hysteresis to avoid jitter
+    if (yTop > lastScrollY + 0.5) scrollDirection = "down";
+    else if (yTop < lastScrollY - 0.5) scrollDirection = "up";
+
+    const baseRatio = 0.5;
+    const adjustedRatio = baseRatio + (scrollDirection === "down" ? directionalOffsetRatio : -directionalOffsetRatio);
+    const clampedRatio = Math.min(0.98, Math.max(0.02, adjustedRatio));
+    const triggerY = yTop + window.innerHeight * clampedRatio;
+
+    // Choose the last section whose top is above or equal to the trigger point
     let i = 0;
     for (let idx = 0; idx < sectionTops.length; idx++) {
-      if (y >= sectionTops[idx]) i = idx;
+      if (triggerY >= sectionTops[idx]) i = idx;
       else break;
     }
 
-    const start = sectionTops[i] ?? 0;
-    const isLast = i >= sectionTops.length - 1;
-    const rawLocal = (y - (start + fadeOffsetPx)) / Math.max(1, fadeLengthPx);
-    const progress = isLast ? 0 : Math.min(1, Math.max(0, rawLocal));
-
-    for (let w = 0; w < wrappers.length; w++) {
-      let opacity;
-      if (w < i) {
-        // Past sections are fully hidden
-        opacity = 0;
-      } else if (w === i) {
-        // Only the active (top) section's opacity changes
-        opacity = 1 - progress;
-      } else {
-        // All following sections are fully opaque to avoid double partial overlays
-        opacity = 1;
+    if (i !== currentActiveIndex) {
+      for (let w = 0; w < wrappers.length; w++) {
+        wrappers[w].classList.toggle("is-active", w === i);
       }
-
-      wrappers[w].style.opacity = String(opacity);
-      wrappers[w].classList.toggle("is-active", w === i);
+      currentActiveIndex = i;
     }
 
+    lastScrollY = yTop;
     ticking = false;
   };
 
   const onScroll = () => {
     if (!ticking) {
       ticking = true;
-      window.requestAnimationFrame(updateActiveOpacity);
+      window.requestAnimationFrame(updateActiveByMidpoint);
     }
+
+    // Debounce a recompute similar to resize, trailing 500ms after scrolling calms
+    if (scrollDebounceTimer) clearTimeout(scrollDebounceTimer);
+    scrollDebounceTimer = setTimeout(() => {
+      onResize();
+    }, 500);
   };
 
   const onResize = () => {
     computeSectionTops();
     // Run an immediate update so positions are correct after resize
-    updateActiveOpacity();
+    updateActiveByMidpoint();
   };
 
   // Initialize positions and initial state
   computeSectionTops();
-  updateActiveOpacity();
+  updateActiveByMidpoint();
 
   // Bind listeners
   window.addEventListener("scroll", onScroll, { passive: true });
