@@ -1,8 +1,10 @@
 (function () {
-  const pluginEl = document.querySelector('[data-wm-plugin="scroll-backgrounds"], [data-wm-plugin="background-scroll"]');
-  if (!pluginEl) return;
+  const pluginEl = document.querySelector('[data-wm-plugin="scroll-backgrounds"], [data-wm-plugin="background-scroll"], [wm-plugin="background-change-all"]');
+  const targetedNodeList = document.querySelectorAll('#sections > .page-section[id*="-background-scroll"], #sections > .page-section:has([wm-plugin="background-change"])');
+  const shouldRun = !!pluginEl || targetedNodeList.length > 0;
+  if (!shouldRun) return;
 
-  const sections = Array.from(document.querySelectorAll("#sections > .page-section"));
+  const sections = Array.from(targetedNodeList.length ? targetedNodeList : document.querySelectorAll("#sections > .page-section"));
   if (!sections.length) return;
 
   const page = document.querySelector("#page") || document.body;
@@ -13,7 +15,7 @@
   };
 
   const globalSettings = window.wmScrollBackgroundsSettings || {};
-  const ds = pluginEl.dataset || {};
+  const ds = pluginEl ? pluginEl.dataset || {} : {};
   const localSettings = {};
 
   const parseRatioPercent = (value) => {
@@ -68,6 +70,7 @@
     wrapper.appendChild(clone);
     stickyWrapper.appendChild(wrapper);
     wrappers.push(wrapper);
+    section.classList.add("wm-scroll-section");
     return clone;
   });
 
