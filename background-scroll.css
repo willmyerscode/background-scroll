@@ -1,8 +1,4 @@
 /* Active overlay that renders section backgrounds behind the page content */
-#wm-scroll-section-container {
-  --transition-duration: 300ms;
-}
-
 #wm-scroll-section-container.is-active {
   position: fixed;
   top: 0;
@@ -45,7 +41,7 @@
   width: 100vw;
   height: 100vh;
   opacity: 0;
-  transition: opacity var(--transition-duration) ease;
+  transition: opacity var(--transition-duration, 260ms) ease;
 }
 
 #wm-scroll-section-container .wm-scroll-wrapper.is-active{
