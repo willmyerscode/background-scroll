@@ -30,7 +30,7 @@
 }
 
 #page:has(#wm-scroll-section-container){
-  contain: layout;
+  transform: translateZ(0px);
 }
 
 /* Wrapper that occupies scroll-space and overlaps neighbors by a fixed amount */
