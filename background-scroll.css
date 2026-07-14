@@ -60,10 +60,12 @@
 }
 
 
-body:not(.sqs-edit-mode-active) #sections > .page-section.wm-scroll-section {
+body:not(.sqs-edit-mode-active) #sections > .page-section.wm-scroll-section,
+body:not(.sqs-edit-mode-active) #page-regions .region > .page-section.wm-scroll-section {
   background-color: transparent !important;
 }
-body:not(.sqs-edit-mode-active) #sections > .page-section.wm-scroll-section > .section-border{
+body:not(.sqs-edit-mode-active) #sections > .page-section.wm-scroll-section > .section-border,
+body:not(.sqs-edit-mode-active) #page-regions .region > .page-section.wm-scroll-section > .section-border{
   opacity:0;
   visibility: hidden;
 }
