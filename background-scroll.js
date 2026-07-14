@@ -1,10 +1,10 @@
 (function () {
   const pluginEl = document.querySelector('[data-wm-plugin="scroll-backgrounds"], [data-wm-plugin="background-scroll"], [wm-plugin="background-change-all"]');
-  const targetedNodeList = document.querySelectorAll('#sections > .page-section[id*="-background-scroll"], #sections > .page-section:has([wm-plugin="background-change"])');
+  const targetedNodeList = document.querySelectorAll('#sections > .page-section[id*="-background-scroll"], #sections > .page-section:has([wm-plugin="background-change"]), #page-regions .region > .page-section[id*="-background-scroll"], #page-regions .region > .page-section:has([wm-plugin="background-change"])');
   const shouldRun = !!pluginEl || targetedNodeList.length > 0;
   if (!shouldRun) return;
 
-  const sections = Array.from(targetedNodeList.length ? targetedNodeList : document.querySelectorAll("#sections > .page-section"));
+  const sections = Array.from(targetedNodeList.length ? targetedNodeList : document.querySelectorAll("#sections > .page-section, #page-regions .region > .page-section"));
   if (!sections.length) return;
 
   const page = document.querySelector("#page") || document.body;
