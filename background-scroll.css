@@ -59,6 +59,11 @@
   min-height: 0;
 }
 
+/* Squarespace never clears the loading screen on cloned video players, which hides the playing video */
+#wm-scroll-section-container .video-player__loading-screen{
+  display: none !important;
+}
+
 
 body:not(.sqs-edit-mode-active) #sections > .page-section.wm-scroll-section,
 body:not(.sqs-edit-mode-active) #page-regions .region > .page-section.wm-scroll-section {
